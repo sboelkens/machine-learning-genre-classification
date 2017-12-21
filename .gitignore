@@ -102,3 +102,6 @@ ENV/
 .DS_Store
 
 .idea
+
+genre-classification/gtzan
+genre-classification/output
