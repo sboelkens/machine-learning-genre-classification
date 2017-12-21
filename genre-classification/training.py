@@ -1,8 +1,5 @@
 import gc
 import os
-import ast
-import sys
-import configparser
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,22 +7,16 @@ from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import keras
-from keras import backend as K
 
 from audiomanip.audiostruct import AudioStruct
 from audiomanip.audiomodels import ModelZoo
 from audiomanip.audioutils import AudioUtils
-from audiomanip.audioutils import MusicDataGenerator
 
 # Disable TF warnings about speed up
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
 def main():
-    # Parse config file
-    # config = configparser.ConfigParser()
-    # config.read('params.ini')
-
     # Constants
     ## Configuration
     GTZAN_FOLDER = 'gtzan/'
