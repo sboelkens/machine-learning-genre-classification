@@ -20,7 +20,7 @@ def main():
     # Constants
     ## Configuration
     GTZAN_FOLDER = 'gtzan/'
-    MODEL_PATH = 'gtzan.h5'
+    MODEL_PATH = 'gtzan_exec_5_epochs_100.h5'
     SAVE_NPY = True
     EXEC_TIMES = int(5)
     CNN_TYPE = '1D'

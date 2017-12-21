@@ -12,7 +12,6 @@ import tkinter
 from tkinter.filedialog import askopenfilename
 
 genres = ['metal', 'disco', 'classical', 'hiphop', 'jazz','country', 'pop', 'blues', 'reggae', 'rock']
-model = load_model('gtzan.h5')
 
 root = tkinter.Tk()
 root.withdraw()
@@ -20,6 +19,8 @@ audio_path = askopenfilename()
 
 signal, sr = librosa.load(audio_path)
 melspec = librosa.feature.melspectrogram(signal[:660000], sr=sr, n_fft=2048, hop_length=512).T[:128, ]
+
+model = load_model('gtzan_exec_10_epochs_200.h5')
 
 X_train = []
 X_train.append(melspec)
