@@ -13,8 +13,10 @@ class AudioStruct(object):
     self.file_path = file_path
     self.n_fft = 2048
     self.hop_length = 512
-    self.genres = {'metal': 0, 'disco': 1, 'classical': 2, 'hiphop': 3, 'jazz': 4,
-      'country': 5, 'pop': 6, 'blues': 7, 'reggae': 8, 'rock': 9}
+    # self.genres = {'metal': 0, 'disco': 1, 'classical': 2, 'hiphop': 3, 'jazz': 4,
+    #   'country': 5, 'pop': 6, 'blues': 7, 'reggae': 8, 'rock': 9}
+    self.genres = {'alternative': 0, 'blues': 1, 'disco': 2, 'electronic': 3, 'folkcountry': 4, 'classical': 5,
+      'jazz': 6, 'pop': 7, 'raphiphop': 8, 'rock': 9}
 
 
   # @Method: getdata

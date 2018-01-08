@@ -17,40 +17,34 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
 def main():
-    # Constants
     ## Configuration
-    GTZAN_FOLDER = 'gtzan/'
-    MODEL_PATH = 'gtzan_exec_5_epochs_100.h5'
+    folder = 'gtzan' #'garageband'#
     SAVE_NPY = True
-    EXEC_TIMES = int(5)
-    CNN_TYPE = '1D'
+    EXEC_TIMES = 20
 
     ## CNN hyperparameters
-    batch_size = int(32)
-    epochs = int(100)
+    batch_size = 32
+    epochs = 1000
 
-    if not ((CNN_TYPE == '1D') or (CNN_TYPE == '2D')):
-        raise ValueError('Argument Invalid: The options are 1D or 2D for CNN_TYPE')
+    MODEL_PATH = folder+'_exec_'+str(EXEC_TIMES)+'_epochs_'+str(epochs)+'.h5'
 
     # Read data
-    data_type = 'NPY' #'AUDIO_FILES'
+    data_type = 'NPY' #'AUDIO_FILES' #
     input_shape = (128, 128)
     print("data_type: %s" % data_type)
 
-    ## Read the .au files
     if data_type == 'AUDIO_FILES':
-        song_rep = AudioStruct(GTZAN_FOLDER)
+        song_rep = AudioStruct(folder + '/')
         songs, genres = song_rep.getdata()
 
         # Save the audio files as npy files to read faster next time
         if SAVE_NPY:
-            np.save(GTZAN_FOLDER + 'songs.npy', songs)
-            np.save(GTZAN_FOLDER + 'genres.npy', genres)
+            np.save(folder + '/' + 'songs.npy', songs)
+            np.save(folder + '/' + 'genres.npy', genres)
 
-    ## Read from npy file
     elif data_type == 'NPY':
-        songs = np.load(GTZAN_FOLDER + 'songs.npy')
-        genres = np.load(GTZAN_FOLDER + 'genres.npy')
+        songs = np.load(folder + '/' + 'songs.npy')
+        genres = np.load(folder + '/' + 'genres.npy')
 
     ## Not valid datatype
     else:
@@ -74,16 +68,14 @@ def main():
         X_train, X_Val, y_train, y_val = train_test_split(
             X_train, y_train, test_size=1 / 6, stratify=y_train)
 
+        print("X_Val: ", len(X_Val))
+        print("y_val: ", len(y_val))
         # split the train, test and validation data in size 128x128
-        X_Val, y_val = AudioUtils().splitsongs_melspect(X_Val, y_val, CNN_TYPE)
-        X_test, y_test = AudioUtils().splitsongs_melspect(X_test, y_test, CNN_TYPE)
-        X_train, y_train = AudioUtils().splitsongs_melspect(X_train, y_train, CNN_TYPE)
+        X_Val, y_val = AudioUtils().splitsongs_melspect(X_Val, y_val, '1D')
+        X_test, y_test = AudioUtils().splitsongs_melspect(X_test, y_test, '1D')
+        X_train, y_train = AudioUtils().splitsongs_melspect(X_train, y_train, '1D')
 
-        # Construct the model
-        if CNN_TYPE == '1D':
-            cnn = ModelZoo.cnn_melspect_1D(input_shape)
-        elif CNN_TYPE == '2D':
-            cnn = ModelZoo.cnn_melspect_2D(input_shape)
+        cnn = ModelZoo.cnn_melspect_1D(input_shape)
 
         print("\nTrain shape: {0}".format(X_train.shape))
         print("Validation shape: {0}".format(X_Val.shape))

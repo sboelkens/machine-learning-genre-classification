@@ -104,4 +104,5 @@ ENV/
 .idea
 
 genre-classification/gtzan
+genre-classification/garageband
 genre-classification/output

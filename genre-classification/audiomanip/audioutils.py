@@ -37,7 +37,7 @@ class AudioUtils(object):
 
     if not cnn_type == '1D':
       temp_X = temp_X[:, np.newaxis]
-    
+
     return temp_X, temp_y
 
   def voting(self, y_true, pred):
