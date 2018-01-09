@@ -16,20 +16,21 @@ from audiomanip.audioutils import AudioUtils
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
-def main():
-    ## Configuration
-    folder = 'gtzan' #'garageband'#
-    SAVE_NPY = True
-    EXEC_TIMES = 20
-
-    ## CNN hyperparameters
+def main(exec_times = 10, epochs = 100, optimizer = 'adam'):
+    # Configuration
+    folder = 'gtzan'  # 'garageband'#
+    results_folder = 'results_opts/'
+    save_npy = True
     batch_size = 32
-    epochs = 1000
 
-    MODEL_PATH = folder+'_exec_'+str(EXEC_TIMES)+'_epochs_'+str(epochs)+'.h5'
+    epochs = 100
+    exec_times = 10
+    optimizer = 'adam'  # 'sgd'
+
+    model_path = folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(optimizer) + '.h5'
 
     # Read data
-    data_type = 'NPY' #'AUDIO_FILES' #
+    data_type = 'NPY'  # 'AUDIO_FILES' #
     input_shape = (128, 128)
     print("data_type: %s" % data_type)
 
@@ -38,7 +39,7 @@ def main():
         songs, genres = song_rep.getdata()
 
         # Save the audio files as npy files to read faster next time
-        if SAVE_NPY:
+        if save_npy:
             np.save(folder + '/' + 'songs.npy', songs)
             np.save(folder + '/' + 'genres.npy', genres)
 
@@ -46,7 +47,7 @@ def main():
         songs = np.load(folder + '/' + 'songs.npy')
         genres = np.load(folder + '/' + 'genres.npy')
 
-    ## Not valid datatype
+    # Not valid datatype
     else:
         raise ValueError('Argument Invalid: The options are AUDIO_FILES or NPY for data_type')
 
@@ -59,7 +60,7 @@ def main():
     test_acc = []
     test_acc_mvs = []
 
-    for x in range(EXEC_TIMES):
+    for x in range(exec_times):
         # Split the dataset into training and test
         X_train, X_test, y_train, y_test = train_test_split(
             songs, genres, test_size=0.1, stratify=genres)
@@ -83,12 +84,28 @@ def main():
         print("Size of the CNN: %s\n" % cnn.count_params())
 
         # Optimizers
-        sgd = keras.optimizers.SGD(lr=0.001, momentum=0.9, decay=1e-5, nesterov=True)
-        adam = keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=1e-5)
+        if optimizer == 'sgd':
+            opt = keras.optimizers.SGD(lr=0.001, momentum=0.9, decay=1e-5, nesterov=True)
+        elif optimizer == 'adam':
+            opt = keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=1e-5)
+        elif optimizer == 'rmsprop':
+            opt = keras.optimizers.RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=0.0)
+        elif optimizer == 'adagrad':
+            opt = keras.optimizers.Adagrad(lr=0.01, epsilon=None, decay=0.0)
+        elif optimizer == 'adadelta':
+            opt = keras.optimizers.Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
+        elif optimizer == 'adamax':
+            opt = keras.optimizers.Adamax(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0)
+        elif optimizer == 'nadam':
+            opt = keras.optimizers.Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=None, schedule_decay=0.004)
+        elif optimizer == 'tfoptimizer':
+            opt = keras.optimizers.TFOptimizer(optimizer)
+        else:
+            opt = keras.optimizers.SGD(lr=0.001, momentum=0.9, decay=1e-5, nesterov=True)
 
         # Compiler for the model
         cnn.compile(loss=keras.losses.categorical_crossentropy,
-                    optimizer=sgd,
+                    optimizer=opt,
                     metrics=['accuracy'])
 
         # Early stop
@@ -136,29 +153,37 @@ def main():
     # summarize history for accuracy
     plt.plot(history.history['acc'])
     plt.plot(history.history['val_acc'])
-    plt.title('model accuracy')
+    plt.title('model accuracy exec: ' + str(exec_times) + ' - epochs: ' + str(epochs) + ' - opt: ' + str(optimizer))
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
+    plt.savefig(results_folder + folder + '_model_accuracy_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + optimizer + '.png')
 
     # summarize history for loss
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
-    plt.title('model loss')
+    plt.title('model loss exec: ' + str(exec_times) + ' - epochs: ' + str(epochs) + ' - opt: ' + str(optimizer))
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
-    plt.show()
+    plt.savefig(results_folder + folder + '_model_loss_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + optimizer + '.png')
 
     # Save the model
-    cnn.save(MODEL_PATH)
+    cnn.save(model_path)
 
     # Free memory
     del songs
     del genres
     gc.collect()
 
+exec_times = [10, 20]
+epochs = [100, 200]
+opts = ['rmsprop', 'adagrad', 'adadelta', 'adam', 'sgd', 'adamax', 'nadam', 'tfoptimizer']
 
-if __name__ == '__main__':
-    main()
+for exec_time in exec_times:
+    for epoch in epochs:
+        for opt in opts:
+            main(exec_time, epoch, opt)
+
+# if __name__ == '__main__':
+#     main()
