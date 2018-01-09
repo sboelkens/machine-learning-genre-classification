@@ -16,16 +16,16 @@ from audiomanip.audioutils import AudioUtils
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
-def main(exec_times = 10, epochs = 100, optimizer = 'adam'):
+def main(exec_times=10, epochs=100, optimizer='adam'):
     # Configuration
     folder = 'gtzan'  # 'garageband'#
     results_folder = 'results_opts/'
     save_npy = True
     batch_size = 32
 
-    epochs = 100
-    exec_times = 10
-    optimizer = 'adam'  # 'sgd'
+    # epochs = 100
+    # exec_times = 10
+    # optimizer = 'adam'  # 'sgd'
 
     model_path = folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(optimizer) + '.h5'
 
@@ -69,8 +69,6 @@ def main(exec_times = 10, epochs = 100, optimizer = 'adam'):
         X_train, X_Val, y_train, y_val = train_test_split(
             X_train, y_train, test_size=1 / 6, stratify=y_train)
 
-        print("X_Val: ", len(X_Val))
-        print("y_val: ", len(y_val))
         # split the train, test and validation data in size 128x128
         X_Val, y_val = AudioUtils().splitsongs_melspect(X_Val, y_val, '1D')
         X_test, y_test = AudioUtils().splitsongs_melspect(X_test, y_test, '1D')
@@ -176,13 +174,15 @@ def main(exec_times = 10, epochs = 100, optimizer = 'adam'):
     del genres
     gc.collect()
 
-exec_times = [10, 20]
-epochs = [100, 200]
-opts = ['rmsprop', 'adagrad', 'adadelta', 'adam', 'sgd', 'adamax', 'nadam', 'tfoptimizer']
 
-for exec_time in exec_times:
-    for epoch in epochs:
-        for opt in opts:
+exs = [10, 20]
+eps = [100, 200]
+ops = ['rmsprop', 'adagrad', 'adadelta', 'adam', 'sgd', 'adamax', 'nadam', 'tfoptimizer']
+
+for exec_time in exs:
+    for epoch in eps:
+        for opt in ops:
+            print('Run with exec_time: ' + str(exec_time) + ' - epochs: ' + str(epoch) + ' - opt: ' + str(opt))
             main(exec_time, epoch, opt)
 
 # if __name__ == '__main__':
