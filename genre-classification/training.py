@@ -16,43 +16,31 @@ from audiomanip.audioutils import AudioUtils
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
-def main(exec_times=10, epochs=100, optimizer='adam'):
+def main(exec_times=10, epochs=100, optimizer='adam', loss_function='categorical_crossentropy',
+         results_folder='results_opts/'):
     # Configuration
     folder = 'gtzan'  # 'garageband'#
-    results_folder = 'results_opts/'
-    save_npy = True
+    create_npy_array = False
     batch_size = 32
 
+    # results_folder = 'results_opts2/'
     # epochs = 100
     # exec_times = 10
     # optimizer = 'adam'  # 'sgd'
 
-    model_path = folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(optimizer) + '.h5'
+    model_path = folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(
+        optimizer) + '_loss_' + str(loss_function) + '.h5'
 
-    # Read data
-    data_type = 'NPY'  # 'AUDIO_FILES' #
+    if create_npy_array:
+        create_npy(folder)
+
+    songs = np.load(folder + '/' + 'songs.npy')
+    genres = np.load(folder + '/' + 'genres.npy')
+
+    # print("Original songs array shape: {0}".format(songs.shape))
+    # print("Original genre array shape: {0}".format(genres.shape))
+
     input_shape = (128, 128)
-    print("data_type: %s" % data_type)
-
-    if data_type == 'AUDIO_FILES':
-        song_rep = AudioStruct(folder + '/')
-        songs, genres = song_rep.getdata()
-
-        # Save the audio files as npy files to read faster next time
-        if save_npy:
-            np.save(folder + '/' + 'songs.npy', songs)
-            np.save(folder + '/' + 'genres.npy', genres)
-
-    elif data_type == 'NPY':
-        songs = np.load(folder + '/' + 'songs.npy')
-        genres = np.load(folder + '/' + 'genres.npy')
-
-    # Not valid datatype
-    else:
-        raise ValueError('Argument Invalid: The options are AUDIO_FILES or NPY for data_type')
-
-    print("Original songs array shape: {0}".format(songs.shape))
-    print("Original genre array shape: {0}".format(genres.shape))
 
     # Train multiple times and get mean score
     val_acc = []
@@ -62,70 +50,50 @@ def main(exec_times=10, epochs=100, optimizer='adam'):
 
     for x in range(exec_times):
         # Split the dataset into training and test
-        X_train, X_test, y_train, y_test = train_test_split(
+        x_train, x_test, y_train, y_test = train_test_split(
             songs, genres, test_size=0.1, stratify=genres)
 
         # Split training set into training and validation
-        X_train, X_Val, y_train, y_val = train_test_split(
-            X_train, y_train, test_size=1 / 6, stratify=y_train)
+        x_train, x_val, y_train, y_val = train_test_split(
+            x_train, y_train, test_size=1 / 6, stratify=y_train)
 
         # split the train, test and validation data in size 128x128
-        X_Val, y_val = AudioUtils().splitsongs_melspect(X_Val, y_val, '1D')
-        X_test, y_test = AudioUtils().splitsongs_melspect(X_test, y_test, '1D')
-        X_train, y_train = AudioUtils().splitsongs_melspect(X_train, y_train, '1D')
+        x_val, y_val = AudioUtils().splitsongs_melspect(x_val, y_val, '1D')
+        x_test, y_test = AudioUtils().splitsongs_melspect(x_test, y_test, '1D')
+        x_train, y_train = AudioUtils().splitsongs_melspect(x_train, y_train, '1D')
 
         cnn = ModelZoo.cnn_melspect_1D(input_shape)
 
-        print("\nTrain shape: {0}".format(X_train.shape))
-        print("Validation shape: {0}".format(X_Val.shape))
-        print("Test shape: {0}\n".format(X_test.shape))
-        print("Size of the CNN: %s\n" % cnn.count_params())
-
-        # Optimizers
-        if optimizer == 'sgd':
-            opt = keras.optimizers.SGD(lr=0.001, momentum=0.9, decay=1e-5, nesterov=True)
-        elif optimizer == 'adam':
-            opt = keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=1e-5)
-        elif optimizer == 'rmsprop':
-            opt = keras.optimizers.RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=0.0)
-        elif optimizer == 'adagrad':
-            opt = keras.optimizers.Adagrad(lr=0.01, epsilon=None, decay=0.0)
-        elif optimizer == 'adadelta':
-            opt = keras.optimizers.Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
-        elif optimizer == 'adamax':
-            opt = keras.optimizers.Adamax(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0)
-        elif optimizer == 'nadam':
-            opt = keras.optimizers.Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=None, schedule_decay=0.004)
-        elif optimizer == 'tfoptimizer':
-            opt = keras.optimizers.TFOptimizer(optimizer)
-        else:
-            opt = keras.optimizers.SGD(lr=0.001, momentum=0.9, decay=1e-5, nesterov=True)
+        # print("\nTrain shape: {0}".format(x_train.shape))
+        # print("Validation shape: {0}".format(x_val.shape))
+        # print("Test shape: {0}\n".format(x_test.shape))
+        # print("Size of the CNN: %s\n" % cnn.count_params())
 
         # Compiler for the model
-        cnn.compile(loss=keras.losses.categorical_crossentropy,
-                    optimizer=opt,
+        cnn.compile(loss=create_loss_function(loss_function),
+                    optimizer=create_optimizer(optimizer),
                     metrics=['accuracy'])
 
         # Early stop
-        earlystop = keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                  min_delta=0,
-                                                  patience=2,
-                                                  verbose=0,
-                                                  mode='auto')
+        early_stop = keras.callbacks.EarlyStopping(monitor='val_loss',
+                                                   min_delta=0,
+                                                   patience=2,
+                                                   verbose=0,
+                                                   mode='auto')
 
         # Fit the model
-        history = cnn.fit(X_train, y_train,
+        history = cnn.fit(x_train, y_train,
                           batch_size=batch_size,
                           epochs=epochs,
                           verbose=1,
-                          validation_data=(X_Val, y_val),
-                          callbacks=[earlystop])
+                          validation_data=(x_val, y_val),
+                          callbacks=[early_stop])
 
-        score = cnn.evaluate(X_test, y_test, verbose=0)
-        score_val = cnn.evaluate(X_Val, y_val, verbose=0)
+        score = cnn.evaluate(x_test, y_test, verbose=0)
+        score_val = cnn.evaluate(x_val, y_val, verbose=0)
 
         # Majority Voting System
-        pred_values = np.argmax(cnn.predict(X_test), axis=1)
+        pred_values = np.argmax(cnn.predict(x_test), axis=1)
         mvs_truth, mvs_res = AudioUtils().voting(np.argmax(y_test, axis=1), pred_values)
         acc_mvs = accuracy_score(mvs_truth, mvs_res)
 
@@ -148,42 +116,136 @@ def main(exec_times=10, epochs=100, optimizer='adam'):
     print("Test accuracy - mean: %s, std: %s" % (np.mean(test_acc), np.std(test_acc)))
     print("Test accuracy MVS - mean: %s, std: %s" % (np.mean(test_acc_mvs), np.std(test_acc_mvs)))
 
-    # summarize history for accuracy
+    plt.figure()
     plt.plot(history.history['acc'])
     plt.plot(history.history['val_acc'])
-    plt.title('model accuracy exec: ' + str(exec_times) + ' - epochs: ' + str(epochs) + ' - opt: ' + str(optimizer))
+    plt.title('model accuracy exec: ' + str(exec_times)
+              + ' - epochs: ' + str(epochs)
+              + ' - opt: ' + str(optimizer)
+              + ' - loss: ' + str(loss_function))
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
-    plt.savefig(results_folder + folder + '_model_accuracy_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + optimizer + '.png')
+    plt.savefig(results_folder + folder + '_model_accuracy_exec_' + str(exec_times) + '_epochs_' +
+                str(epochs) + '_opt_' + optimizer + '_loss_' + str(loss_function) + '.png')
 
-    # summarize history for loss
+    plt.figure()
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
-    plt.title('model loss exec: ' + str(exec_times) + ' - epochs: ' + str(epochs) + ' - opt: ' + str(optimizer))
+    plt.title('model loss exec: ' + str(exec_times)
+              + ' - epochs: ' + str(epochs)
+              + ' - opt: ' + str(optimizer)
+              + ' - loss: ' + str(loss_function))
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
-    plt.savefig(results_folder + folder + '_model_loss_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + optimizer + '.png')
+    plt.savefig(results_folder + folder + '_model_loss_exec_' + str(exec_times) + '_epochs_' +
+                str(epochs) + '_opt_' + optimizer + '_loss_' + str(loss_function) + '.png')
+
+    plt.close()
 
     # Save the model
     cnn.save(model_path)
+    history.history['acc'].save(results_folder + folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(
+        optimizer) + '_loss_' + str(loss_function) + '_train_acc.h5')
+    history.history['val_acc'].save(results_folder + folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(
+        optimizer) + '_loss_' + str(loss_function) + '_test_acc.h5')
+    history.history['loss'].save(results_folder + folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(
+        optimizer) + '_loss_' + str(loss_function) + '_train_loss.h5')
+    history.history['val_loss'].save(results_folder + folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(
+        optimizer) + '_loss_' + str(loss_function) + '_test_loss.h5')
 
     # Free memory
     del songs
     del genres
+    del cnn
+    del history
+
     gc.collect()
 
 
-exs = [10, 20]
-eps = [100, 200]
-ops = ['rmsprop', 'adagrad', 'adadelta', 'adam', 'sgd', 'adamax', 'nadam', 'tfoptimizer']
+def create_npy(folder):
+    song_rep = AudioStruct(folder + '/')
+    songs, genres = song_rep.getdata()
+
+    np.save(folder + '/' + 'songs.npy', songs)
+    np.save(folder + '/' + 'genres.npy', genres)
+
+    return True
+
+
+def create_optimizer(optimizer):
+    if optimizer == 'sgd':
+        return keras.optimizers.SGD(lr=0.001, momentum=0.9, decay=1e-5, nesterov=True)
+    elif optimizer == 'adam':
+        return keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=1e-5)
+    elif optimizer == 'rmsprop':
+        return keras.optimizers.RMSprop(lr=0.001, rho=0.9, epsilon=1e-08, decay=0.0)
+    elif optimizer == 'adagrad':
+        return keras.optimizers.Adagrad(lr=0.01, epsilon=1e-08, decay=0.0)
+    elif optimizer == 'adadelta':
+        return keras.optimizers.Adadelta(lr=1.0, rho=0.95, epsilon=1e-08, decay=0.0)
+    elif optimizer == 'adamax':
+        return keras.optimizers.Adamax(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+    elif optimizer == 'nadam':
+        return keras.optimizers.Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=1e-08, schedule_decay=0.004)
+    else:
+        return keras.optimizers.SGD(lr=0.001, momentum=0.9, decay=1e-5, nesterov=True)
+
+
+def create_loss_function(loss_function):
+    if loss_function == 'mean_squared_error':
+        return keras.losses.mean_squared_error
+    elif loss_function == 'mean_absolute_error':
+        return keras.losses.mean_absolute_error
+    elif loss_function == 'mean_absolute_percentage_error':
+        return keras.losses.mean_absolute_percentage_error
+    elif loss_function == 'mean_squared_logarithmic_error':
+        return keras.losses.mean_squared_logarithmic_error
+    elif loss_function == 'squared_hinge':
+        return keras.losses.squared_hinge
+    elif loss_function == 'hinge':
+        return keras.losses.hinge
+    elif loss_function == 'categorical_hinge':
+        return keras.losses.categorical_hinge
+    elif loss_function == 'logcosh':
+        return keras.losses.logcosh
+    elif loss_function == 'categorical_crossentropy':
+        return keras.losses.categorical_crossentropy
+    elif loss_function == 'sparse_categorical_crossentropy':
+        return keras.losses.sparse_categorical_crossentropy
+    elif loss_function == 'binary_crossentropy':
+        return keras.losses.binary_crossentropy
+    elif loss_function == 'kullback_leibler_divergence':
+        return keras.losses.kullback_leibler_divergence
+    elif loss_function == 'poisson':
+        return keras.losses.poisson
+    elif loss_function == 'cosine_proximity':
+        return keras.losses.cosine_proximity
+    else:
+        return keras.losses.categorical_crossentropy
+
+
+# if __name__ == '__main__':
+#     main()
+
+exs = [10]
+eps = [100]
+ops = ['adam']  # ['adadelta', 'adagrad', 'adam', 'adamax', 'nadam', 'rmsprop', 'sgd']
+los = [
+    'mean_squared_error', 'mean_absolute_error', 'mean_absolute_percentage_error',
+    'mean_squared_logarithmic_error', 'squared_hinge', 'hinge', 'categorical_hinge',
+    'logcosh', 'categorical_crossentropy', 'sparse_categorical_crossentropy',
+    'binary_crossentropy', 'kullback_leibler_divergence', 'poisson', 'cosine_proximity'
+]
+resulting_folder = 'results_losses/'
 
 for exec_time in exs:
     for epoch in eps:
         for opt in ops:
-            print('Run with exec_time: ' + str(exec_time) + ' - epochs: ' + str(epoch) + ' - opt: ' + str(opt))
-            main(exec_time, epoch, opt)
-
-# if __name__ == '__main__':
-#     main()
+            for loss in los:
+                print('Run with exec_time: ' + str(exec_time) +
+                      ' - epochs: ' + str(epoch) +
+                      ' - opt: ' + str(opt) +
+                      ' - loss: ' + str(loss))
+                main(exec_time, epoch, opt, loss, resulting_folder)
