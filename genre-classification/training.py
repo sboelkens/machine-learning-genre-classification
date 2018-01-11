@@ -2,14 +2,15 @@ import gc
 import os
 
 import numpy as np
+import h5py
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import keras
 
-from audiomanip.audiostruct import AudioStruct
-from audiomanip.audiomodels import ModelZoo
+from keras_models import KerasModels
+from create_spectograms import MelSpectrogram
 from audiomanip.audioutils import AudioUtils
 
 # Disable TF warnings about speed up
@@ -19,7 +20,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 def main(exec_times=10, epochs=100, optimizer='adam', loss_function='categorical_crossentropy',
          results_folder='results_opts/'):
     # Configuration
-    folder = 'gtzan'  # 'garageband'#
+    folder = 'gtzan'  # 'garageband'#  Z
     create_npy_array = False
     batch_size = 32
 
@@ -28,7 +29,7 @@ def main(exec_times=10, epochs=100, optimizer='adam', loss_function='categorical
     # exec_times = 10
     # optimizer = 'adam'  # 'sgd'
 
-    model_path = folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(
+    model_path = 'models/' + folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(
         optimizer) + '_loss_' + str(loss_function) + '.h5'
 
     if create_npy_array:
@@ -62,7 +63,7 @@ def main(exec_times=10, epochs=100, optimizer='adam', loss_function='categorical
         x_test, y_test = AudioUtils().splitsongs_melspect(x_test, y_test, '1D')
         x_train, y_train = AudioUtils().splitsongs_melspect(x_train, y_train, '1D')
 
-        cnn = ModelZoo.cnn_melspect_1D(input_shape)
+        cnn = KerasModels.cnn_melspect_1D(input_shape)
 
         # print("\nTrain shape: {0}".format(x_train.shape))
         # print("Validation shape: {0}".format(x_val.shape))
@@ -146,14 +147,13 @@ def main(exec_times=10, epochs=100, optimizer='adam', loss_function='categorical
 
     # Save the model
     cnn.save(model_path)
-    history.history['acc'].save(results_folder + folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(
-        optimizer) + '_loss_' + str(loss_function) + '_train_acc.h5')
-    history.history['val_acc'].save(results_folder + folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(
-        optimizer) + '_loss_' + str(loss_function) + '_test_acc.h5')
-    history.history['loss'].save(results_folder + folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(
-        optimizer) + '_loss_' + str(loss_function) + '_train_loss.h5')
-    history.history['val_loss'].save(results_folder + folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(
-        optimizer) + '_loss_' + str(loss_function) + '_test_loss.h5')
+    h5f = h5py.File(results_folder + folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(
+        optimizer) + '_loss_' + str(loss_function) + '.h5', 'w')
+    h5f.create_dataset('train_acc', data=history.history['acc'])
+    h5f.create_dataset('test_acc', data=history.history['val_acc'])
+    h5f.create_dataset('train_loss', data=history.history['loss'])
+    h5f.create_dataset('test_loss', data=history.history['val_loss'])
+    h5f.close()
 
     # Free memory
     del songs
@@ -165,8 +165,8 @@ def main(exec_times=10, epochs=100, optimizer='adam', loss_function='categorical
 
 
 def create_npy(folder):
-    song_rep = AudioStruct(folder + '/')
-    songs, genres = song_rep.getdata()
+    song_rep = MelSpectrogram(folder + '/')
+    songs, genres = song_rep.audio_to_array()
 
     np.save(folder + '/' + 'songs.npy', songs)
     np.save(folder + '/' + 'genres.npy', genres)
@@ -212,8 +212,6 @@ def create_loss_function(loss_function):
         return keras.losses.logcosh
     elif loss_function == 'categorical_crossentropy':
         return keras.losses.categorical_crossentropy
-    elif loss_function == 'sparse_categorical_crossentropy':
-        return keras.losses.sparse_categorical_crossentropy
     elif loss_function == 'binary_crossentropy':
         return keras.losses.binary_crossentropy
     elif loss_function == 'kullback_leibler_divergence':
@@ -233,9 +231,9 @@ exs = [10]
 eps = [100]
 ops = ['adam']  # ['adadelta', 'adagrad', 'adam', 'adamax', 'nadam', 'rmsprop', 'sgd']
 los = [
-    'mean_squared_error', 'mean_absolute_error', 'mean_absolute_percentage_error',
-    'mean_squared_logarithmic_error', 'squared_hinge', 'hinge', 'categorical_hinge',
-    'logcosh', 'categorical_crossentropy', 'sparse_categorical_crossentropy',
+    # 'mean_squared_error', 'mean_absolute_error', 'mean_absolute_percentage_error',
+    # 'mean_squared_logarithmic_error', 'squared_hinge', 'hinge', 'categorical_hinge',
+    # 'logcosh', 'categorical_crossentropy',
     'binary_crossentropy', 'kullback_leibler_divergence', 'poisson', 'cosine_proximity'
 ]
 resulting_folder = 'results_losses/'
