@@ -51,25 +51,48 @@ def make_plot(folder, h5py_files, names):
     plt.close()
 
 
+# h5_files = [
+#     'gtzan_exec_10_epochs_100_opt_adam_loss_mean_absolute_error',
+#     'gtzan_exec_10_epochs_100_opt_adam_loss_mean_absolute_percentage_error',
+#     'gtzan_exec_10_epochs_100_opt_adam_loss_mean_squared_error',
+#     'gtzan_exec_10_epochs_100_opt_adam_loss_mean_squared_logarithmic_error',
+#     'gtzan_exec_10_epochs_100_opt_adam_loss_categorical_crossentropy',
+#     'gtzan_exec_10_epochs_100_opt_adam_loss_categorical_hinge',
+#     'gtzan_exec_10_epochs_100_opt_adam_loss_hinge',
+#     'gtzan_exec_10_epochs_100_opt_adam_loss_logcosh'
+# ]
+# file_names = [
+#     'mean_abs_error',
+#     'mean_abs_perc_error',
+#     'mean_squared_error',
+#     'mean_squared_log_error',
+#     'categorical_crossentropy',
+#     'categorical_hinge',
+#     'hinge',
+#     'logcosh'
+# ]
+#
+# make_plot('results_losses', h5_files, file_names)
+
+
+
 h5_files = [
-    'gtzan_exec_10_epochs_100_opt_adam_loss_mean_absolute_error',
-    'gtzan_exec_10_epochs_100_opt_adam_loss_mean_absolute_percentage_error',
-    'gtzan_exec_10_epochs_100_opt_adam_loss_mean_squared_error',
-    'gtzan_exec_10_epochs_100_opt_adam_loss_mean_squared_logarithmic_error',
+    'gtzan_exec_10_epochs_100_opt_adadelta_loss_categorical_crossentropy',
+    'gtzan_exec_10_epochs_100_opt_adagrad_loss_categorical_crossentropy',
     'gtzan_exec_10_epochs_100_opt_adam_loss_categorical_crossentropy',
-    'gtzan_exec_10_epochs_100_opt_adam_loss_categorical_hinge',
-    'gtzan_exec_10_epochs_100_opt_adam_loss_hinge',
-    'gtzan_exec_10_epochs_100_opt_adam_loss_logcosh'
+    'gtzan_exec_10_epochs_100_opt_adamax_loss_categorical_crossentropy',
+    'gtzan_exec_10_epochs_100_opt_nadam_loss_categorical_crossentropy',
+    'gtzan_exec_10_epochs_100_opt_rmsprop_loss_categorical_crossentropy',
+    'gtzan_exec_10_epochs_100_opt_sgd_loss_categorical_crossentropy'
 ]
 file_names = [
-    'mean_abs_error',
-    'mean_abs_perc_error',
-    'mean_squared_error',
-    'mean_squared_log_error',
-    'categorical_crossentropy',
-    'categorical_hinge',
-    'hinge',
-    'logcosh'
+    'adadelta',
+    'adagrad',
+    'adam',
+    'adamax',
+    'nadam',
+    'rmsprop',
+    'sgd'
 ]
 
-make_plot('results_losses', h5_files, file_names)
+make_plot('results_opts', h5_files, file_names)

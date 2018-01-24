@@ -18,7 +18,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
 def main(exec_times=10, epochs=100, optimizer='adam', loss_function='categorical_crossentropy',
-         results_folder='results_opts/'):
+         results_folder='results/', conv_layers=[16,32,64]):
     # Configuration
     folder = 'gtzan'  # 'garageband'#  Z
     create_npy_array = False
@@ -29,7 +29,7 @@ def main(exec_times=10, epochs=100, optimizer='adam', loss_function='categorical
     # exec_times = 10
     # optimizer = 'adam'  # 'sgd'
 
-    model_path = 'models/' + folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(
+    model_path = folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(
         optimizer) + '_loss_' + str(loss_function) + '.h5'
 
     if create_npy_array:
@@ -48,6 +48,7 @@ def main(exec_times=10, epochs=100, optimizer='adam', loss_function='categorical
     test_history = []
     test_acc = []
     test_acc_mvs = []
+    output_text = ''
 
     for x in range(exec_times):
         # Split the dataset into training and test
@@ -63,7 +64,9 @@ def main(exec_times=10, epochs=100, optimizer='adam', loss_function='categorical
         x_test, y_test = AudioUtils().splitsongs_melspect(x_test, y_test, '1D')
         x_train, y_train = AudioUtils().splitsongs_melspect(x_train, y_train, '1D')
 
-        cnn = KerasModels.cnn_melspect_1D(input_shape)
+        cnn, output_text = KerasModels.cnn_melspect(input_shape, conv_layers)
+
+        print(output_text)
 
         # print("\nTrain shape: {0}".format(x_train.shape))
         # print("Validation shape: {0}".format(x_val.shape))
@@ -117,13 +120,17 @@ def main(exec_times=10, epochs=100, optimizer='adam', loss_function='categorical
     print("Test accuracy - mean: %s, std: %s" % (np.mean(test_acc), np.std(test_acc)))
     print("Test accuracy MVS - mean: %s, std: %s" % (np.mean(test_acc_mvs), np.std(test_acc_mvs)))
 
+    if not os.path.exists(results_folder):
+        os.makedirs(results_folder)
+
     plt.figure()
     plt.plot(history.history['acc'])
     plt.plot(history.history['val_acc'])
-    plt.title('model accuracy exec: ' + str(exec_times)
-              + ' - epochs: ' + str(epochs)
-              + ' - opt: ' + str(optimizer)
-              + ' - loss: ' + str(loss_function))
+    # plt.title('model accuracy exec: ' + str(exec_times)
+    #           + ' - epochs: ' + str(epochs)
+    #           + ' - opt: ' + str(optimizer)
+    #           + ' - loss: ' + str(loss_function))
+    plt.title('model accuracy: '+ str(output_text))
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
@@ -133,10 +140,11 @@ def main(exec_times=10, epochs=100, optimizer='adam', loss_function='categorical
     plt.figure()
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
-    plt.title('model loss exec: ' + str(exec_times)
-              + ' - epochs: ' + str(epochs)
-              + ' - opt: ' + str(optimizer)
-              + ' - loss: ' + str(loss_function))
+    # plt.title('model loss exec: ' + str(exec_times)
+    #           + ' - epochs: ' + str(epochs)
+    #           + ' - opt: ' + str(optimizer)
+    #           + ' - loss: ' + str(loss_function))
+    plt.title('model loss:'+ str(output_text))
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
@@ -146,7 +154,7 @@ def main(exec_times=10, epochs=100, optimizer='adam', loss_function='categorical
     plt.close()
 
     # Save the model
-    cnn.save(model_path)
+    cnn.save(results_folder + model_path)
     h5f = h5py.File(results_folder + folder + '_exec_' + str(exec_times) + '_epochs_' + str(epochs) + '_opt_' + str(
         optimizer) + '_loss_' + str(loss_function) + '.h5', 'w')
     h5f.create_dataset('train_acc', data=history.history['acc'])
@@ -223,27 +231,42 @@ def create_loss_function(loss_function):
     else:
         return keras.losses.categorical_crossentropy
 
+def pre_def_main(conv_layers):
+    results_folder = 'results_' + str(len(conv_layers))+'_'
+    for index, conv_layer in enumerate(conv_layers, start=1):
+        results_folder += str(conv_layer)
+        if (index < len(conv_layers)):
+            results_folder += '_'
+    results_folder += '/'
+    main(10, 200, 'adagrad', 'categorical_crossentropy', results_folder, conv_layers)
 
 # if __name__ == '__main__':
 #     main()
 
 exs = [10]
-eps = [100]
-ops = ['adam']  # ['adadelta', 'adagrad', 'adam', 'adamax', 'nadam', 'rmsprop', 'sgd']
-los = [
+eps = [200]
+ops = ['adagrad']  # ['adadelta', 'adagrad', 'adam', 'adamax', 'nadam', 'rmsprop', 'sgd'] #
+los = ['categorical_crossentropy'
     # 'mean_squared_error', 'mean_absolute_error', 'mean_absolute_percentage_error',
     # 'mean_squared_logarithmic_error', 'squared_hinge', 'hinge', 'categorical_hinge',
     # 'logcosh', 'categorical_crossentropy',
-    'binary_crossentropy', 'kullback_leibler_divergence', 'poisson', 'cosine_proximity'
+    # 'binary_crossentropy', 'kullback_leibler_divergence', 'poisson', 'cosine_proximity'
 ]
-resulting_folder = 'results_losses/'
 
-for exec_time in exs:
-    for epoch in eps:
-        for opt in ops:
-            for loss in los:
-                print('Run with exec_time: ' + str(exec_time) +
-                      ' - epochs: ' + str(epoch) +
-                      ' - opt: ' + str(opt) +
-                      ' - loss: ' + str(loss))
-                main(exec_time, epoch, opt, loss, resulting_folder)
+mods = [[8, 16, 32, 16], [16, 32, 16], [16, 32, 64], [16, 32, 64, 32], [16, 32, 64, 128], [16, 64, 256], [16, 64, 256, 512]]
+
+resulting_folder = 'results_4/'
+
+# for exec_time in exs:
+#     for epoch in eps:
+#         for opt in ops:
+#             for loss in los:
+#                 print('Run with exec_time: ' + str(exec_time) +
+#                       ' - epochs: ' + str(epoch) +
+#                       ' - opt: ' + str(opt) +
+#                       ' - loss: ' + str(loss))
+#                 main(exec_time, epoch, opt, loss, resulting_folder)
+
+for mod in mods:
+    # print(mod)
+    pre_def_main(mod)
