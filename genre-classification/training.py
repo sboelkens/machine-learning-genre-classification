@@ -20,7 +20,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 def main(exec_times=10, epochs=100, optimizer='adam', loss_function='categorical_crossentropy',
          results_folder='results/', conv_layers=[16,32,64]):
     # Configuration
-    folder = 'gtzan'  # 'garageband'#  Z
+    folder = 'gtzan'  # 'garageband'#
     create_npy_array = False
     batch_size = 32
 
@@ -253,7 +253,9 @@ los = ['categorical_crossentropy'
     # 'binary_crossentropy', 'kullback_leibler_divergence', 'poisson', 'cosine_proximity'
 ]
 
-mods = [[8, 16, 32, 16], [16, 32, 16], [16, 32, 64], [16, 32, 64, 32], [16, 32, 64, 128], [16, 64, 256], [16, 64, 256, 512]]
+# mods = [[8, 16, 32, 16], [16, 32, 16], [16, 32, 64], [16, 32, 64, 32], [16, 32, 64, 128], [16, 64, 256], [16, 64, 256, 512]]
+
+mods = [[16, 64, 256]]
 
 resulting_folder = 'results_4/'
 

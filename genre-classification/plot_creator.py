@@ -8,7 +8,7 @@ def make_plot(folder, h5py_files, names):
     plt.figure(1)
     count = 0
     for h5py_file in h5py_files:
-        h5f = h5py.File(folder + '/' + h5py_file + '.h5', 'r')
+        h5f = h5py.File(folder + h5py_file + '.h5', 'r')
         train_acc = h5f['train_acc'][:]
         test_acc = h5f['test_acc'][:]
         h5f.close()
@@ -29,7 +29,7 @@ def make_plot(folder, h5py_files, names):
     plt.figure(2)
     count = 0
     for h5py_file in h5py_files:
-        h5f = h5py.File(folder + '/' + h5py_file + '.h5', 'r')
+        h5f = h5py.File(folder + h5py_file + '.h5', 'r')
         train_loss = h5f['train_loss'][:]
         test_loss = h5f['test_loss'][:]
         h5f.close()
@@ -72,27 +72,53 @@ def make_plot(folder, h5py_files, names):
 #     'logcosh'
 # ]
 #
-# make_plot('results_losses', h5_files, file_names)
+# make_plot('results_losses/', h5_files, file_names)
 
 
+
+# h5_files = [
+#     'gtzan_exec_10_epochs_100_opt_adadelta_loss_categorical_crossentropy',
+#     'gtzan_exec_10_epochs_100_opt_adagrad_loss_categorical_crossentropy',
+#     'gtzan_exec_10_epochs_100_opt_adam_loss_categorical_crossentropy',
+#     'gtzan_exec_10_epochs_100_opt_adamax_loss_categorical_crossentropy',
+#     'gtzan_exec_10_epochs_100_opt_nadam_loss_categorical_crossentropy',
+#     'gtzan_exec_10_epochs_100_opt_rmsprop_loss_categorical_crossentropy',
+#     'gtzan_exec_10_epochs_100_opt_sgd_loss_categorical_crossentropy'
+# ]
+# file_names = [
+#     'adadelta',
+#     'adagrad',
+#     'adam',
+#     'adamax',
+#     'nadam',
+#     'rmsprop',
+#     'sgd'
+# ]
+
+# make_plot('results_opts/', h5_files, file_names)
 
 h5_files = [
-    'gtzan_exec_10_epochs_100_opt_adadelta_loss_categorical_crossentropy',
-    'gtzan_exec_10_epochs_100_opt_adagrad_loss_categorical_crossentropy',
-    'gtzan_exec_10_epochs_100_opt_adam_loss_categorical_crossentropy',
-    'gtzan_exec_10_epochs_100_opt_adamax_loss_categorical_crossentropy',
-    'gtzan_exec_10_epochs_100_opt_nadam_loss_categorical_crossentropy',
-    'gtzan_exec_10_epochs_100_opt_rmsprop_loss_categorical_crossentropy',
-    'gtzan_exec_10_epochs_100_opt_sgd_loss_categorical_crossentropy'
+    'results_3_16_32_16/gtzan_exec_10_epochs_200_opt_adagrad_loss_categorical_crossentropy',
+    'results_3_16_32_64/gtzan_exec_10_epochs_200_opt_adagrad_loss_categorical_crossentropy',
+    'results_3_16_64_256/gtzan_exec_10_epochs_200_opt_adagrad_loss_categorical_crossentropy',
+    'results_3_32_64_128/gtzan_exec_10_epochs_200_opt_adagrad_loss_categorical_crossentropy',
+    'results_4_8_16_32_16/gtzan_exec_10_epochs_200_opt_adagrad_loss_categorical_crossentropy',
+    'results_4_16_32_64_32/gtzan_exec_10_epochs_200_opt_adagrad_loss_categorical_crossentropy',
+    'results_4_16_32_64_128/gtzan_exec_10_epochs_200_opt_adagrad_loss_categorical_crossentropy',
+    'results_4_16_64_256_512/gtzan_exec_10_epochs_200_opt_adagrad_loss_categorical_crossentropy',
+    'results_4_32_64_128_256/gtzan_exec_10_epochs_200_opt_adagrad_loss_categorical_crossentropy'
 ]
 file_names = [
-    'adadelta',
-    'adagrad',
-    'adam',
-    'adamax',
-    'nadam',
-    'rmsprop',
-    'sgd'
+    'K 3: 16-32-16',
+    'K 3: 16-32-64',
+    'K 3: 16-64-256',
+    'K 3: 32-64-128',
+    'K 3: 64-128-256',
+    'K 4: 8-16-32-16',
+    'K 4: 16-32-64-32',
+    'K 4: 16-32-64-128',
+    'K 4: 16-64-256-512',
+    'K 4: 32-64-128-256',
 ]
 
-make_plot('results_opts', h5_files, file_names)
+make_plot('', h5_files, file_names)
